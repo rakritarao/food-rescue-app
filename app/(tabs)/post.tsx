@@ -1,4 +1,4 @@
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore'
+import { addDoc, collection, getDocs, query, serverTimestamp, where } from 'firebase/firestore'
 import { useState } from 'react'
 import {
   ActivityIndicator,
@@ -11,6 +11,45 @@ import {
 } from 'react-native'
 import { db } from '../../firebase/config'
 
+async function notifyNGOs(listing: {
+  foodName: string
+  quantity: number
+  pickupTime: string
+  restaurantName: string
+}) {
+  try {
+    // get all NGO push tokens from Firestore
+    const ngoSnap = await getDocs(
+      query(
+        collection(db, 'users'),
+        where('role', '==', 'ngo'),
+      )
+    )
+
+    const tokens = ngoSnap.docs
+      .map(doc => doc.data().pushToken)
+      .filter(Boolean)
+
+    if (tokens.length === 0) return
+
+    const messages = tokens.map(token => ({
+      to: token,
+      sound: 'default',
+      title: '🍱 New Food Available!',
+      body: `${listing.restaurantName} posted ${listing.quantity} portions of ${listing.foodName}. Pickup by ${listing.pickupTime}.`,
+    }))
+
+    await fetch('https://exp.host/--/api/v2/push/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(messages),
+    })
+
+  } catch (error) {
+    console.log('Notification error:', error)
+  }
+}
+
 export default function PostScreen() {
   const [foodName, setFoodName] = useState('')
   const [quantity, setQuantity] = useState('')
@@ -19,7 +58,6 @@ export default function PostScreen() {
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit() {
-    // basic validation
     if (!foodName || !quantity || !pickupTime || !restaurantName) {
       Alert.alert('Missing fields', 'Please fill in all fields before submitting.')
       return
@@ -28,18 +66,24 @@ export default function PostScreen() {
     setLoading(true)
 
     try {
-      await addDoc(collection(db, 'listings'), {
+      const listing = {
         foodName,
         quantity: Number(quantity),
         pickupTime,
         restaurantName,
+      }
+
+      await addDoc(collection(db, 'listings'), {
+        ...listing,
         status: 'available',
         createdAt: serverTimestamp(),
       })
 
-      Alert.alert('Posted!', 'Your food listing is now live.')
+      // notify all NGOs
+      await notifyNGOs(listing)
 
-      // clear the form
+      Alert.alert('Posted!', 'Your food listing is now live and NGOs have been notified.')
+
       setFoodName('')
       setQuantity('')
       setPickupTime('')
@@ -56,7 +100,7 @@ export default function PostScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.heading}>Post Surplus Food</Text>
       <Text style={styles.subheading}>
-        Fill in the details below and NGOs near you will be notified.
+        Fill in the details below and NGOs near you will be notified instantly.
       </Text>
 
       <Text style={styles.label}>Restaurant Name</Text>

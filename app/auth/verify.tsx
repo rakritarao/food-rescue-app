@@ -1,17 +1,45 @@
+import * as Notifications from 'expo-notifications'
 import { router, useLocalSearchParams } from 'expo-router'
 import { PhoneAuthProvider, signInWithCredential } from 'firebase/auth'
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { useState } from 'react'
 import {
-    ActivityIndicator,
-    Alert,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native'
 import { auth, db } from '../../firebase/config'
+
+async function registerPushToken(userId: string) {
+  try {
+    const { status: existingStatus } = await Notifications.getPermissionsAsync()
+    let finalStatus = existingStatus
+
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync()
+      finalStatus = status
+    }
+
+    if (finalStatus !== 'granted') return
+
+    const token = await Notifications.getExpoPushTokenAsync({
+      projectId: '06bf8adb-5737-4581-a8bf-f96efd737fef'
+    })
+
+    await setDoc(doc(db, 'users', userId), {
+      pushToken: token.data,
+      platform: Platform.OS,
+    }, { merge: true })
+
+  } catch (error: any) {
+    console.log('Push token error:', error.message)
+  }
+}
 
 export default function VerifyScreen() {
   const { verificationId } = useLocalSearchParams<{ verificationId: string }>()
@@ -30,15 +58,16 @@ export default function VerifyScreen() {
       const result = await signInWithCredential(auth, credential)
       const user = result.user
 
-      // check if user already exists in Firestore
       const userRef = doc(db, 'users', user.uid)
       const userSnap = await getDoc(userRef)
 
       if (!userSnap.exists()) {
-        // new user — send to role selection
-        router.replace('/auth/role')
+        router.replace({
+          pathname: '/auth/role',
+          params: { uid: user.uid }
+        })
       } else {
-        // existing user — send to main app
+        await registerPushToken(user.uid)
         router.replace('/(tabs)/feed')
       }
 
