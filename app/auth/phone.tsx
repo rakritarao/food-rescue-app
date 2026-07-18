@@ -11,8 +11,10 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity
+  TouchableOpacity,
+  View,
 } from 'react-native'
+import AppLogo from '../../components/AppLogo'
 import { auth } from '../../firebase/config'
 
 export default function PhoneScreen() {
@@ -60,10 +62,11 @@ export default function PhoneScreen() {
           firebaseConfig={auth.app.options}
         />
 
-        <Text style={styles.title}>Welcome to{'\n'}Food Rescue 🍱</Text>
-        <Text style={styles.subtitle}>
-          Enter your phone number to get started
-        </Text>
+        <View style={styles.logoContainer}>
+          <AppLogo size={100} />
+          <Text style={styles.appName}>Food Rescue</Text>
+          <Text style={styles.tagline}>Nourish · Connect · Sustain</Text>
+        </View>
 
         <Text style={styles.label}>Phone Number</Text>
         <TextInput
@@ -102,17 +105,21 @@ const styles = StyleSheet.create({
     padding: 28,
     justifyContent: 'center',
   },
-  title: {
-    fontSize: 32,
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  appName: {
+    fontSize: 28,
     fontWeight: '700',
     color: '#2D6A4F',
-    marginBottom: 10,
-    lineHeight: 40,
+    marginTop: 12,
+    marginBottom: 4,
   },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 36,
+  tagline: {
+    fontSize: 12,
+    color: '#52B788',
+    letterSpacing: 2,
   },
   label: {
     fontSize: 14,
