@@ -42,3 +42,7 @@ app-example
 /ios
 /android
 firebase/config.ts
+.claude/
+.agents/skills/
+CLAUDE.md
+AGENTS.md
