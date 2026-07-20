@@ -1,4 +1,4 @@
-import { addDoc, collection, getDocs, query, serverTimestamp, where } from 'firebase/firestore'
+import { addDoc, collection, getDocs, query, serverTimestamp, Timestamp, where } from 'firebase/firestore'
 import { useState } from 'react'
 import {
   ActivityIndicator,
@@ -11,6 +11,34 @@ import {
 } from 'react-native'
 import { db } from '../../firebase/config'
 
+function parsePickupTime(input: string): Date | null {
+  try {
+    const now = new Date()
+    const lower = input.toLowerCase()
+
+    const timeMatch = lower.match(/(\d{1,2}):?(\d{2})?\s*(am|pm)/)
+    if (!timeMatch) return null
+
+    let hours = parseInt(timeMatch[1])
+    const minutes = timeMatch[2] ? parseInt(timeMatch[2]) : 0
+    const meridiem = timeMatch[3]
+
+    if (meridiem === 'pm' && hours !== 12) hours += 12
+    if (meridiem === 'am' && hours === 12) hours = 0
+
+    const deadline = new Date(now)
+    deadline.setHours(hours, minutes, 0, 0)
+
+    if (deadline < now) {
+      deadline.setDate(deadline.getDate() + 1)
+    }
+
+    return deadline
+  } catch {
+    return null
+  }
+}
+
 async function notifyNGOs(listing: {
   foodName: string
   quantity: number
@@ -18,7 +46,6 @@ async function notifyNGOs(listing: {
   restaurantName: string
 }) {
   try {
-    // get all NGO push tokens from Firestore
     const ngoSnap = await getDocs(
       query(
         collection(db, 'users'),
@@ -73,13 +100,15 @@ export default function PostScreen() {
         restaurantName,
       }
 
+      const deadlineDate = parsePickupTime(pickupTime)
+
       await addDoc(collection(db, 'listings'), {
         ...listing,
         status: 'available',
         createdAt: serverTimestamp(),
+        pickupDeadline: deadlineDate ? Timestamp.fromDate(deadlineDate) : null,
       })
 
-      // notify all NGOs
       await notifyNGOs(listing)
 
       Alert.alert('Posted!', 'Your food listing is now live and NGOs have been notified.')
@@ -131,7 +160,7 @@ export default function PostScreen() {
       <Text style={styles.label}>Pickup By</Text>
       <TextInput
         style={styles.input}
-        placeholder="e.g. 9:00 PM today"
+        placeholder="e.g. 9:00 PM"
         value={pickupTime}
         onChangeText={setPickupTime}
       />

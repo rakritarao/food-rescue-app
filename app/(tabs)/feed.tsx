@@ -1,5 +1,5 @@
-import { collection, doc, onSnapshot, orderBy, query, runTransaction, where } from 'firebase/firestore'
-import { useEffect, useState } from 'react'
+import { collection, doc, getDocs, onSnapshot, orderBy, query, runTransaction, Timestamp, where, writeBatch } from 'firebase/firestore'
+import { useCallback, useEffect, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
@@ -24,7 +24,34 @@ export default function FeedScreen() {
   const [listings, setListings] = useState<Listing[]>([])
   const [loading, setLoading] = useState(true)
 
+  const checkAndExpireListings = useCallback(async () => {
+    try {
+      const now = Timestamp.now()
+      const snapshot = await getDocs(
+        query(
+          collection(db, 'listings'),
+          where('status', '==', 'available'),
+          where('pickupDeadline', '<=', now)
+        )
+      )
+
+      if (snapshot.empty) return
+
+      const batch = writeBatch(db)
+      snapshot.docs.forEach(document => {
+        batch.update(doc(db, 'listings', document.id), { status: 'expired' })
+      })
+      await batch.commit()
+
+      console.log(`Expired ${snapshot.docs.length} listings`)
+    } catch (error) {
+      console.log('Expiry check error:', error)
+    }
+  }, [])
+
   useEffect(() => {
+    checkAndExpireListings()
+
     const q = query(
       collection(db, 'listings'),
       where('status', '==', 'available'),
@@ -42,7 +69,7 @@ export default function FeedScreen() {
     })
 
     return () => unsubscribe()
-  }, [])
+  }, [checkAndExpireListings])
 
   async function handleClaim(listingId: string) {
     try {
