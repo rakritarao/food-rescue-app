@@ -1,50 +1,158 @@
-# Welcome to your Expo app 👋
+<div align="center">
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+# 🍲 Food Rescue
 
-## Get started
+### Real-time food waste redistribution network
 
-1. Install dependencies
+*Connecting restaurants with surplus food to shelters and NGOs — before it hits the dumpster.*
 
-   ```bash
-   npm install
-   ```
+[![React Native](https://img.shields.io/badge/React%20Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactnative.dev/)
+[![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
+[![Status](https://img.shields.io/badge/status-in%20development-orange?style=for-the-badge)]()
 
-2. Start the app
+[Problem](#-the-problem) • [Solution](#-the-solution) • [Features](#-features) • [Architecture](#-architecture) • [Tech Stack](#-tech-stack) • [Getting Started](#-getting-started) • [Impact](#-impact-metrics) • [Roadmap](#-roadmap)
 
-   ```bash
-   npx expo start
-   ```
+</div>
 
-In the output, you'll find options to open the app in a
+---
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## 📖 Overview
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+**Food Rescue** is a mobile-first coordination platform that closes the gap between restaurants with surplus prepared food and the shelters, food banks, and NGOs that need it — in real time. Unlike consumer marketplaces that sell surplus food at a discount, Food Rescue is purpose-built for **charitable redistribution**, with a verified-NGO network and a volunteer driver layer to physically move food from kitchen to community.
 
-## Get a fresh project
+> Restaurants throw away an estimated **40% of prepared food daily**. Most of it is edible, safe, and simply unclaimed. Food Rescue exists to make sure "surplus" never means "wasted."
 
-When you're ready, run:
+---
 
-```bash
-npm run reset-project
+## 🚨 The Problem
+
+- Restaurants generate large volumes of surplus, safe-to-eat food every single day.
+- Nearby shelters and food banks are frequently **unaware** the surplus exists, or find out too late to collect it.
+- Existing platforms like **Too Good To Go** solve a *consumer* problem (cheap food for individuals) — not a *charity* problem (getting food to people who need it most).
+- There's no lightweight, real-time layer connecting **kitchens → NGOs → the last mile (drivers)**.
+
+## 💡 The Solution
+
+Food Rescue is a three-sided real-time marketplace:
+
+| Actor | Role |
+|---|---|
+| 🍽️ **Restaurants** | Post surplus food listings in seconds — item, quantity, pickup window |
+| 🏠 **Shelters / NGOs** | Get instant push notifications for nearby listings and claim pickups |
+| 🚗 **Volunteer Drivers** | Coordinate last-mile pickup and delivery between restaurant and shelter |
+
+All three sides operate on a shared real-time feed, so a surplus post can go from *"we have 20 meals left over"* to *"picked up and delivered"* in minutes.
+
+---
+
+## ✨ Features
+
+- **📍 Real-time surplus listings** — restaurants post food with photos, quantity, allergen notes, and pickup windows
+- **🔔 Instant push notifications** — verified NGOs are alerted the moment a nearby listing goes live
+- **✅ NGO verification layer** — shelters and food banks are vetted before they can claim listings
+- **🚗 Driver coordination** — volunteer drivers see open delivery requests and claim routes
+- **🗺️ Pickup window & location logic** — time-boxed claims prevent food from being "reserved and forgotten"
+- **📊 Impact dashboard** — kilograms of food saved and meals delivered, tracked per restaurant and per city
+- **💬 In-app coordination** — lightweight chat/status updates between restaurant, NGO, and driver for a given handoff
+
+---
+
+## 🏗️ Architecture
+
+```
+┌─────────────────┐        ┌──────────────────────┐        ┌─────────────────┐
+│   Restaurant     │        │                       │        │   Shelter / NGO  │
+│   (React Native) │───────▶│   Firebase Backend    │───────▶│  (React Native)  │
+│                  │        │                       │        │                  │
+│  Post surplus    │        │  • Firestore (data)   │        │  Receive push    │
+│  food listing    │        │  • Cloud Functions     │        │  notification    │
+└─────────────────┘        │  • Cloud Messaging     │        │  Claim listing   │
+                             │  • Auth (verification) │        └─────────────────┘
+                             │  • Realtime updates    │
+                             └──────────┬────────────┘
+                                        │
+                                        ▼
+                             ┌──────────────────────┐
+                             │   Volunteer Driver    │
+                             │   (React Native)      │
+                             │                        │
+                             │  Claim delivery route  │
+                             │  Update handoff status │
+                             └──────────────────────┘
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+**Core data flow:**
+1. Restaurant creates a listing → written to **Firestore**.
+2. A **Cloud Function** triggers on new-listing writes, geo-queries nearby verified NGOs, and fans out **push notifications** via **Firebase Cloud Messaging**.
+3. First NGO to claim locks the listing (optimistic locking / transaction) to prevent double-claims.
+4. If the NGO needs transport, the listing becomes a **driver job**, broadcast to nearby volunteer drivers.
+5. Status updates (claimed → picked up → delivered) propagate in real time to all three parties.
 
-## Learn more
+---
 
-To learn more about developing your project with Expo, look at the following resources:
+## 🛠️ Tech Stack
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+| Layer | Technology |
+|---|---|
+| **Mobile App** | React Native |
+| **Backend / Database** | Firebase (Firestore) |
+| **Real-time messaging** | Firebase Cloud Messaging (FCM) |
+| **Auth & Verification** | Firebase Authentication |
+| **Serverless logic** | Cloud Functions for Firebase |
+| **Geolocation** | Geo-queries for proximity matching (restaurant ↔ NGO ↔ driver) |
 
-## Join the community
+---
 
-Join our community of developers creating universal apps.
+### Prerequisites
+- Node.js ≥ 18
+- npm or yarn
+- React Native development environment ([official setup guide](https://reactnative.dev/docs/environment-setup))
+- A Firebase project with Firestore, Auth, and Cloud Messaging enabled
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### Installation
+
+```bash
+# Clone the repo
+git clone https://github.com/<your-username>/food-rescue.git
+cd food-rescue
+
+# Install dependencies
+npm install
+
+# Add your Firebase config
+cp .env.example .env
+# then fill in your Firebase project credentials in .env
+
+# Run on iOS
+npx react-native run-ios
+
+# Run on Android
+npx react-native run-android
+```
+
+### Environment Variables
+
+```
+FIREBASE_API_KEY=
+FIREBASE_AUTH_DOMAIN=
+FIREBASE_PROJECT_ID=
+FIREBASE_MESSAGING_SENDER_ID=
+FIREBASE_APP_ID=
+```
+
+---
+
+## 📊 Impact Metrics
+
+Food Rescue tracks outcomes, not just usage:
+
+- 🥘 **Kilograms of food saved** from landfill
+- 🍽️ **Meals delivered** to shelters and NGOs
+- ⏱️ **Average time-to-claim** for a listing
+- 🚗 **Deliveries completed** by volunteer drivers
+- 🏪 **Active restaurant partners** per city
+
+These metrics are surfaced in an in-app dashboard so restaurants and NGOs can see their real-world impact.
+
+---
