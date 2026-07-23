@@ -17,7 +17,7 @@
 
 ---
 
-## 📖 Overview
+## Overview
 
 **Food Rescue** is a mobile-first coordination platform that closes the gap between restaurants with surplus prepared food and the shelters, food banks, and NGOs that need it — in real time. Unlike consumer marketplaces that sell surplus food at a discount, Food Rescue is purpose-built for **charitable redistribution**, with a verified-NGO network and a volunteer driver layer to physically move food from kitchen to community.
 
@@ -25,40 +25,40 @@
 
 ---
 
-## 🚨 The Problem
+## The Problem
 
 - Restaurants generate large volumes of surplus, safe-to-eat food every single day.
 - Nearby shelters and food banks are frequently **unaware** the surplus exists, or find out too late to collect it.
 - Existing platforms like **Too Good To Go** solve a *consumer* problem (cheap food for individuals) — not a *charity* problem (getting food to people who need it most).
 - There's no lightweight, real-time layer connecting **kitchens → NGOs → the last mile (drivers)**.
 
-## 💡 The Solution
+## The Solution
 
 Food Rescue is a three-sided real-time marketplace:
 
 | Actor | Role |
 |---|---|
-| 🍽️ **Restaurants** | Post surplus food listings in seconds — item, quantity, pickup window |
-| 🏠 **Shelters / NGOs** | Get instant push notifications for nearby listings and claim pickups |
-| 🚗 **Volunteer Drivers** | Coordinate last-mile pickup and delivery between restaurant and shelter |
+| **Restaurants** | Post surplus food listings in seconds — item, quantity, pickup window |
+| **Shelters / NGOs** | Get instant push notifications for nearby listings and claim pickups |
+| **Volunteer Drivers** | Coordinate last-mile pickup and delivery between restaurant and shelter |
 
 All three sides operate on a shared real-time feed, so a surplus post can go from *"we have 20 meals left over"* to *"picked up and delivered"* in minutes.
 
 ---
 
-## ✨ Features
+## Features
 
-- **📍 Real-time surplus listings** — restaurants post food with photos, quantity, allergen notes, and pickup windows
-- **🔔 Instant push notifications** — verified NGOs are alerted the moment a nearby listing goes live
-- **✅ NGO verification layer** — shelters and food banks are vetted before they can claim listings
-- **🚗 Driver coordination** — volunteer drivers see open delivery requests and claim routes
-- **🗺️ Pickup window & location logic** — time-boxed claims prevent food from being "reserved and forgotten"
-- **📊 Impact dashboard** — kilograms of food saved and meals delivered, tracked per restaurant and per city
-- **💬 In-app coordination** — lightweight chat/status updates between restaurant, NGO, and driver for a given handoff
+- **Real-time surplus listings** : restaurants post food with photos, quantity, allergen notes, and pickup windows
+- **Instant push notifications** : verified NGOs are alerted the moment a nearby listing goes live
+- **NGO verification layer** : shelters and food banks are vetted before they can claim listings
+- **Driver coordination** : volunteer drivers see open delivery requests and claim routes
+- **Pickup window & location logic** : time-boxed claims prevent food from being "reserved and forgotten"
+- **Impact dashboard** : kilograms of food saved and meals delivered, tracked per restaurant and per city
+- **In-app coordination** : lightweight chat/status updates between restaurant, NGO, and driver for a given handoff
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌─────────────────┐        ┌──────────────────────┐        ┌─────────────────┐
@@ -91,7 +91,7 @@ All three sides operate on a shared real-time feed, so a surplus post can go fro
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |---|---|
@@ -140,19 +140,5 @@ FIREBASE_PROJECT_ID=
 FIREBASE_MESSAGING_SENDER_ID=
 FIREBASE_APP_ID=
 ```
-
----
-
-## 📊 Impact Metrics
-
-Food Rescue tracks outcomes, not just usage:
-
-- 🥘 **Kilograms of food saved** from landfill
-- 🍽️ **Meals delivered** to shelters and NGOs
-- ⏱️ **Average time-to-claim** for a listing
-- 🚗 **Deliveries completed** by volunteer drivers
-- 🏪 **Active restaurant partners** per city
-
-These metrics are surfaced in an in-app dashboard so restaurants and NGOs can see their real-world impact.
 
 ---
